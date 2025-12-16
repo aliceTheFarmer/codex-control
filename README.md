@@ -1,24 +1,70 @@
-# codex-control
+## Installation
 
-1. Clone this repository.
-2. Run `make install` (needs sudo to copy binaries into `/usr/bin`).
+```bash
+git clone https://github.com/aliceTheFarmer/codex-control.git
+cd codex-control
+make install
+```
 
-## Binaries
+---
 
-- **codex-yolo** – Runs `codex --dangerously-bypass-approvals-and-sandbox` with any arguments you pass after `--`.
-- **codex-yolo-resume** – Same as above but automatically runs `codex resume`.
-- **codex-update** – Downloads the latest Codex release, stages it in `/tmp/codex-control`, and installs it to `/usr/bin/codex`.
-- **codex-update-select** – Lists the last 200 releases; pick one to install. The UI uses ↑/↓/digits to navigate and Enter to install.
-- **codex-auth** – Lets you pick an auth profile from the folder pointed to by `CODEX_AUTHS_PATH` (or `--auths-path=<folder>`). When you confirm, it copies the selected file to `~/.codex/auth.json`.
+## `codex-auth`
 
-## Auth Profiles
+Use this to switch between previously authenticated Codex accounts.
 
-1. Run `codex login` normally so Codex writes your current credentials to `~/.codex/auth.json`.
-2. Copy that file into the folder defined by `CODEX_AUTHS_PATH`, naming it how you want it to appear in the menu (e.g., `work-account.auth.json`).
-3. Set `CODEX_AUTHS_PATH` in your shell startup file so the CLI knows where to find those saved auth dumps, for example:
+1. Run `codex login` normally. Codex will write your current credentials to:
+   `~/.codex/auth.json`
+
+2. Copy that file into the directory defined by `CODEX_AUTHS_PATH`, naming it
+   however you want it to appear in the menu (for example:
+   `work-account.auth.json`).
+
+3. Set `CODEX_AUTHS_PATH` in your shell startup file so the CLI knows where to
+   find your saved auth files. Example:
 
 ```bash
 export CODEX_AUTHS_PATH="$HOME/projects/codex-control/auths"
 ```
 
-`codex-auth` scans that directory, shows every file, and writes your selection back to `~/.codex/auth.json`. The tool errors if the variable is empty or the folder has no files, so maintain one `.auth.json` per previously authenticated account inside that directory.
+4. Run `codex-auth` and select the profile you want.
+   The menu highlights the last used profile and sorts entries by recent usage.
+
+---
+
+## `codex-yolo`
+
+Starts Codex in *yolo* mode in the current directory.
+
+```bash
+codex-yolo
+```
+
+---
+
+## `codex-yolo-resume`
+
+Starts Codex and resumes a previous session.
+
+```bash
+codex-yolo-resume
+```
+
+---
+
+## `codex-update`
+
+Updates Codex to the latest available version.
+
+```bash
+codex-update
+```
+
+---
+
+## `codex-update-select`
+
+Lists the latest ~200 released Codex versions and installs the one you select.
+
+```bash
+codex-update-select
+```
