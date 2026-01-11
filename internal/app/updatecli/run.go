@@ -9,10 +9,16 @@ import (
 
 	"codex-control/internal/cli"
 	"codex-control/internal/codex"
+	"codex-control/internal/config"
 	"codex-control/internal/env"
 	"codex-control/internal/logger"
 	"codex-control/internal/output"
 )
+
+type updateConfig struct {
+	Verbosity   int    `yaml:"verbosity"`
+	GitHubToken string `yaml:"github-token"`
+}
 
 // Run executes the codex-update workflow.
 func Run(args []string) int {
@@ -26,8 +32,15 @@ func Run(args []string) int {
 	fs := flag.NewFlagSet(command, flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 
+	defaults := updateConfig{Verbosity: 1}
+	var cfg updateConfig
+	if _, err := config.Load(command, defaults, &cfg); err != nil {
+		log.Errorf(logger.PrefixCLI, "Failed to load config: %v", err)
+		return 1
+	}
+
 	global := cli.GlobalFlags{}
-	global.Register(fs)
+	global.Register(fs, cfg.Verbosity)
 
 	options := cli.GlobalUsageOptions()
 	fs.Usage = func() {
@@ -62,7 +75,7 @@ func Run(args []string) int {
 	}
 
 	installer := codex.Installer{
-		Client:     codex.NewClient(nil),
+		Client:     codex.NewClient(nil, cfg.GitHubToken),
 		Log:        log,
 		Workdir:    workspace,
 		TargetPath: env.TargetBinaryPath(),

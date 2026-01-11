@@ -8,6 +8,7 @@ type GlobalFlags struct {
 }
 
 // Register binds the shared flags to the provided FlagSet.
-func (g *GlobalFlags) Register(fs *flag.FlagSet) {
-	fs.IntVar(&g.Verbosity, "verbosity", 1, "Set verbosity level (0-2).")
+func (g *GlobalFlags) Register(fs *flag.FlagSet, defaultVerbosity int) {
+	g.Verbosity = defaultVerbosity
+	fs.IntVar(&g.Verbosity, "verbosity", defaultVerbosity, "Set verbosity level (0-2).")
 }

@@ -13,11 +13,18 @@ import (
 
 	"codex-control/internal/cli"
 	"codex-control/internal/codex"
+	"codex-control/internal/config"
 	"codex-control/internal/env"
 	"codex-control/internal/logger"
 	"codex-control/internal/output"
 	"codex-control/internal/tui/menu"
 )
+
+type updateSelectConfig struct {
+	Verbosity    int    `yaml:"verbosity"`
+	ReleaseLimit int    `yaml:"release-limit"`
+	GitHubToken  string `yaml:"github-token"`
+}
 
 // Run executes the codex-update-select workflow.
 func Run(args []string) int {
@@ -28,14 +35,21 @@ func Run(args []string) int {
 	const synopsis = "codex-update-select [options]"
 
 	log := logger.New()
+	defaults := updateSelectConfig{Verbosity: 1, ReleaseLimit: 200, GitHubToken: ""}
+	var settings updateSelectConfig
+	if _, err := config.Load(command, defaults, &settings); err != nil {
+		log.Errorf(logger.PrefixCLI, "Failed to load config: %v", err)
+		return 1
+	}
+
 	fs := flag.NewFlagSet(command, flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 
 	global := cli.GlobalFlags{}
-	global.Register(fs)
+	global.Register(fs, settings.Verbosity)
 
 	var releaseLimit int
-	fs.IntVar(&releaseLimit, "release-limit", 200, "Maximum number of releases to display.")
+	fs.IntVar(&releaseLimit, "release-limit", settings.ReleaseLimit, "Maximum number of releases to display.")
 
 	options := append(cli.GlobalUsageOptions(), cli.UsageOption{
 		Long:        "release-limit",
@@ -64,7 +78,7 @@ func Run(args []string) int {
 		return 1
 	}
 	if releaseLimit <= 0 {
-		releaseLimit = 200
+		releaseLimit = defaults.ReleaseLimit
 	}
 
 	workspace, err := env.PrepareWorkspace()
@@ -80,7 +94,7 @@ func Run(args []string) int {
 		return 1
 	}
 
-	client := codex.NewClient(nil)
+	client := codex.NewClient(nil, settings.GitHubToken)
 	installer := codex.Installer{Client: client, Log: log, Workdir: workspace, TargetPath: env.TargetBinaryPath()}
 	loader := &releaseLoader{client: client, platform: platform, limit: releaseLimit}
 

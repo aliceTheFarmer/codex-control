@@ -14,10 +14,16 @@ import (
 
 	"codex-control/internal/auth"
 	"codex-control/internal/cli"
+	"codex-control/internal/config"
 	"codex-control/internal/logger"
 	"codex-control/internal/output"
 	"codex-control/internal/tui/menu"
 )
+
+type authConfig struct {
+	Verbosity int    `yaml:"verbosity"`
+	AuthsPath string `yaml:"auths-path"`
+}
 
 // Run executes the codex-auth workflow.
 func Run(args []string) int {
@@ -28,20 +34,27 @@ func Run(args []string) int {
 	const synopsis = "codex-auth [options]"
 
 	log := logger.New()
+	defaults := authConfig{Verbosity: 1, AuthsPath: ""}
+	var settings authConfig
+	if _, err := config.Load(command, defaults, &settings); err != nil {
+		log.Errorf(logger.PrefixCLI, "Failed to load config: %v", err)
+		return 1
+	}
+
 	fs := flag.NewFlagSet(command, flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 
 	global := cli.GlobalFlags{}
-	global.Register(fs)
+	global.Register(fs, settings.Verbosity)
 
 	var authPathFlag string
-	fs.StringVar(&authPathFlag, "auths-path", "", "Folder containing Codex auth profiles.")
+	fs.StringVar(&authPathFlag, "auths-path", settings.AuthsPath, "Folder containing Codex auth profiles.")
 
 	options := append(cli.GlobalUsageOptions(), cli.UsageOption{
 		Long:        "auths-path",
 		Short:       "a",
 		Value:       "<path>",
-		Description: "Override CODEX_AUTHS_PATH for this run.",
+		Description: "Override the configured auths path for this run.",
 	})
 	fs.Usage = func() {
 		cli.UsagePrinter{Command: command, Synopsis: synopsis, Options: options}.Print()
@@ -64,11 +77,7 @@ func Run(args []string) int {
 		return 1
 	}
 
-	authPath := authPathFlag
-	if authPath == "" {
-		authPath = os.Getenv("CODEX_AUTHS_PATH")
-	}
-	authPath, err = auth.ValidateRoot(authPath)
+	authPath, err := auth.ValidateRoot(authPathFlag)
 	if err != nil {
 		log.Errorf(logger.PrefixAuth, "Invalid auth directory: %v", err)
 		return 1

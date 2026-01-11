@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
@@ -37,13 +36,9 @@ type Client struct {
 }
 
 // NewClient builds a GitHub client using the provided http.Client.
-func NewClient(httpClient *http.Client) *Client {
+func NewClient(httpClient *http.Client, token string) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
-	}
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		token = os.Getenv("GH_TOKEN")
 	}
 	return &Client{httpClient: httpClient, token: token}
 }

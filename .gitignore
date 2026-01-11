@@ -60,3 +60,10 @@ powa-chromium_profile_*/
 
 # Local tooling profiles
 profile/
+
+# git_commiter generated exclusions
+**/logs/
+**/xdg_cache/
+**/xdg_config/
+**/xdg_runtime/
+burp/burpbrowser-profile

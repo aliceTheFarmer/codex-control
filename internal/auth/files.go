@@ -83,7 +83,7 @@ func Install(src string) (CopyResult, error) {
 // If the provided path contains an "auths" subdirectory with files, that subdirectory is preferred.
 func ValidateRoot(path string) (string, error) {
 	if path == "" {
-		return "", fmt.Errorf("CODEX_AUTHS_PATH is not set")
+		return "", fmt.Errorf("auths path is not set; set --auths-path or update the config file")
 	}
 	cleaned := filepath.Clean(path)
 	info, err := os.Stat(cleaned)

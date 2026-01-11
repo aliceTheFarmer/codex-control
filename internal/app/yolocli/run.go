@@ -8,10 +8,16 @@ import (
 	"syscall"
 
 	"codex-control/internal/cli"
+	"codex-control/internal/config"
 	"codex-control/internal/logger"
 	"codex-control/internal/output"
 	"codex-control/internal/yolo"
 )
+
+type yoloConfig struct {
+	Verbosity   int    `yaml:"verbosity"`
+	CodexBinary string `yaml:"codex-binary"`
+}
 
 // Run executes the codex-yolo style CLI for the provided mode.
 func Run(mode yolo.Mode, command string, synopsis string) int {
@@ -19,13 +25,21 @@ func Run(mode yolo.Mode, command string, synopsis string) int {
 	defer cancel()
 
 	log := logger.New()
+
+	defaults := yoloConfig{Verbosity: 1, CodexBinary: "codex"}
+	var cfg yoloConfig
+	if _, err := config.Load(command, defaults, &cfg); err != nil {
+		log.Errorf(logger.PrefixCLI, "Failed to load config: %v", err)
+		return 1
+	}
+
 	fs := flag.NewFlagSet(command, flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 	global := cli.GlobalFlags{}
-	global.Register(fs)
+	global.Register(fs, cfg.Verbosity)
 
 	var codexBinary string
-	fs.StringVar(&codexBinary, "codex-binary", "codex", "Path to the codex binary.")
+	fs.StringVar(&codexBinary, "codex-binary", cfg.CodexBinary, "Path to the codex binary.")
 
 	options := append(cli.GlobalUsageOptions(), cli.UsageOption{
 		Long:        "codex-binary",
@@ -48,6 +62,9 @@ func Run(mode yolo.Mode, command string, synopsis string) int {
 	if err := cli.ValidateVerbosity(global.Verbosity); err != nil {
 		log.Errorf(logger.PrefixCLI, "Invalid verbosity: %v", err)
 		return 1
+	}
+	if codexBinary == "" {
+		codexBinary = defaults.CodexBinary
 	}
 
 	runner := yolo.Runner{Binary: codexBinary, Mode: mode, Log: log}
